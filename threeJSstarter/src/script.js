@@ -7,7 +7,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import * as dat from 'dat.gui'
-import { Color, Group, Mesh, MeshStandardMaterial, Path, Quaternion, RectAreaLight, ShaderMaterial, TextureEncoding, UVMapping, Vector2, Vector3 } from 'three'
+import { AnimationClip, AnimationMixer, Color, Euler, Group, LoopOnce, Mesh, MeshStandardMaterial, Path, Quaternion, RectAreaLight, ShaderMaterial, TextureEncoding, UVMapping, Vector2, Vector3 } from 'three'
+import { lerp } from 'three/src/math/mathutils';
 
 //global variables for scene
 var front = true;
@@ -54,10 +55,10 @@ window.addEventListener('resize', () =>
 
 //camera
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 10)
+const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 20)
 camera.position.x = 0
 camera.position.y = 0
-camera.position.z = 2
+camera.position.z = 5
 gui.add(camera.position, 'x').min(-9).max(9);
 gui.add(camera.position, 'y').min(-9).max(9);
 gui.add(camera.position, 'z').min(-9).max(9);
@@ -74,7 +75,6 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.toneMapping = THREE.ReinhardToneMapping;
-
 
 
 // Controls
@@ -94,31 +94,48 @@ var faceobj = new Mesh;
 var shaderobj1 = new Mesh;
 var phonescreen = new MeshStandardMaterial;
 var tabscreen = new MeshStandardMaterial;
+const facebacktex ={
+    fbtexture: {type: "t", value: new THREE.TextureLoader().load('Assets/2D/spacetex1.jpg')}
+}
+const phonetex1 = new THREE.TextureLoader().load('Assets/2D/chainet.png');
+const phonetex2 = new THREE.TextureLoader().load('Assets/2D/vanend.png');
+const phonetex3 = new THREE.TextureLoader().load('Assets/2D/vanstart.png');
+const phonetex4 = new THREE.TextureLoader().load('Assets/2D/tab.png');
+const phonetexes = [phonetex1, phonetex2, phonetex3, phonetex4];
+const tabtex1 = new THREE.TextureLoader().load('Assets/2D/acceloweb.jpg');
+const tabtex2 = new THREE.TextureLoader().load('Assets/2D/acceloweb2.jpg');
+const tabtex3 = new THREE.TextureLoader().load('Assets/2D/projection.jpg');
+const tabtexes = [tabtex1, tabtex2, tabtex3];
+var faceanims = new Array;
+var mixer;
+// const fly1 = new THREE.AnimationClip();
+// const fly2 = new THREE.AnimationClip();
+// const sleep = new THREE.AnimationClip();
 //actually load now
 loader.load(
     // resource URL
     'Assets/3D/face.gltf',
     // called when the resource is loaded
     function (gltf) {
-
-
         gltfscene = gltf.scene;
         scene.add(gltf.scene);
         gltf.scene.translateZ(-1.4);
         gltf.scene.translateY(-0.2);
-        gui.add(gltf.scene.rotation, 'x').min(0).max(9);
-        gui.add(gltf.scene.rotation, 'y').min(0).max(9);
-        gui.add(gltf.scene.rotation, 'z').min(0).max(9);
+        gui.add(gltf.scene.rotation, 'x').min(-9).max(9);
+        gui.add(gltf.scene.rotation, 'y').min(-9).max(9);
+        gui.add(gltf.scene.rotation, 'z').min(-9).max(9);
         gui.add(gltf.scene.position, 'x').min(-9).max(9);
         gui.add(gltf.scene.position, 'y').min(-9).max(9);
         gui.add(gltf.scene.position, 'z').min(-9).max(9);
+
+        //revising the materials
         gltf.scene.traverse(function (child) {
             if (child.material && child.material.name === 'wireframe') {
                 child.material.wireframe = true;
                 child.material.emissiveIntensity = 3;
             }
             if (child.material && child.material.name === 'phonescreen') {
-                child.material.emissiveIntensity = 3;
+                child.material.emissiveIntensity = 0.5;
                 phonescreen = child.material;
             }
             if (child.material && child.material.name === 'tabscreen') {
@@ -142,11 +159,46 @@ loader.load(
             }
             if (child.material && child.material.name === 'facebackmatrev') {
                 faceobj = child;
+                child.material = new ShaderMaterial({
+                    uniforms: facebacktex,
+                    vertexShader: document.getElementById("facebackVertexShader").textContent,
+                    fragmentShader: document.getElementById("facebackFragmentShader").textContent
+                });
             }
             if (child.material && child.material.name === 'testmat') {
                 shaderobj1 = child
             }
+            
         });
+        mixer = new AnimationMixer(gltf.scene);
+        gltf.animations.forEach((clip) => {
+            faceanims.push(clip);
+            console.log(faceanims.length);
+            console.log(clip.name);
+        });
+        faceIdleAnims();
+        
+    },
+    function (xhr) {
+
+        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+
+    },
+    // called when loading has errors
+    function (error) {
+
+        console.log('An error happened');
+
+    }
+);
+loader.load(
+    // resource URL
+    'Assets/3D/bg.gltf',
+    // called when the resource is loaded
+    function (gltf) {
+        scene.add(gltf.scene);
+        gltf.scene.translateZ(-1.4);
+        gltf.scene.translateY(-0.2);
     },
     function (xhr) {
 
@@ -218,9 +270,9 @@ const clock = new THREE.Clock();
 gltfscene.rotation.set(0, 0, 0);
 const currentRotVec = gltfscene.rotation;
 
-document.getElementById("3D").onmousemove = function(event) {myFunction(event)};
+document.getElementById("3D").onmousemove = function(event) {onMouseMove(event)};
 
-function myFunction(e) {
+function onMouseMove(e) {
   if(front && interactable){
   var rect = e.target.getBoundingClientRect();
   var x = (e.clientX - rect.right/2)/(rect.right/2);
@@ -228,7 +280,32 @@ function myFunction(e) {
   currentRotVec.set(0, 0, 0);
   gltfscene.rotation.set(currentRotVec.x + y/5, currentRotVec.y + x/5, currentRotVec.z);
   }
-  
+  if(!front && interactable)
+  {
+    var rect = e.target.getBoundingClientRect();
+    var x = e.clientX;
+    var y = e.clientY;
+    if(y > rect.bottom/2)
+    {
+        if(mode != 'Game'){
+            mode = 'Game';
+            movetoGame();
+        }
+    }else{
+        if(x < rect.right/2){
+            if(mode != '2D'){
+                mode = '2D';
+                moveto2D();
+            }
+        }else{
+            if(mode != '3D'){
+                mode = '3D';
+                moveto3D();
+            }
+        }
+    }
+    console.log(mode);
+  }
 }
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
@@ -251,18 +328,7 @@ function onPointerDown( event ) {
 }
 var turncount = 0;
 function turn(){
-    if(front){
-        gltfscene.rotateY(-0.1);
-        turncount += 0.1;
-        composer.render();
-        if(turncount >= 3){
-            turncount = 0;
-            interactable = true;
-            gltfscene.rotation.set(0,0,0);
-        }else{
-            window.requestAnimationFrame(turn)
-        }
-    }else{
+    if(!front){
         gltfscene.rotateY(-0.1);
         turncount += 0.1;
         composer.render();
@@ -273,15 +339,128 @@ function turn(){
         }else{
             window.requestAnimationFrame(turn)
         }
+        moveto2D();
+    }else if(mode === '2D'){
+        console.log('move to 2D');
+    }
+    else if(mode === '3D'){
+        console.log('move to 3D');
+    }
+    else if(mode === 'Game'){
+        console.log('move to Game');
+
     }
 }
 
-const tick = () =>
+const animate = () =>
 {
-    const elapsedTime = clock.getElapsedTime()
+    requestAnimationFrame(animate);
     stats.update();
+    var delta = clock.getDelta();
+    if ( mixer ) mixer.update( delta );
     composer.render();
-    window.requestAnimationFrame(tick)
+}
+animate();
+function changePhoneScreen(){
+    var textochangeto = phonetexes[Math.floor(Math.random() * phonetexes.length)];
+    phonescreen.map = textochangeto;
+    phonescreen.emissiveMap = textochangeto;
+    setTimeout(changePhoneScreen, 1000);
 }
 
-tick()
+changePhoneScreen();
+
+function faceIdleAnims(){
+    if(front && interactable){
+        var idleAnim = faceanims[1];
+        if(Math.floor(Math.random() * 5) === 3){
+            idleAnim = faceanims[6];
+        }else{
+            idleAnim = faceanims[1];
+        }
+        const action = mixer.clipAction(idleAnim);
+        action.setLoop(THREE.LoopOnce);
+        action.play();
+        console.log(idleAnim.name);
+        setTimeout(faceIdleAnims, idleAnim.duration * 1000 + 1000);
+    }
+}
+function changeTabScreen(){
+    // do whatever you like here
+    var textochangeto = tabtexes[Math.floor(Math.random() * tabtexes.length)];
+    tabscreen.map = textochangeto;
+    tabscreen.emissiveMap = textochangeto;
+    setTimeout(changeTabScreen, 1500);
+}
+
+changeTabScreen();
+
+//setup basic variables for rotation
+const increment = 30;
+var counter = 0;
+var startPos = new Vector3();
+var startRot = new Quaternion();
+
+const finalPos2D = new Vector3(0,-0.45,2.1);
+const finalRot2D = new Quaternion();
+finalRot2D.setFromEuler(new THREE.Euler(0.2,3,0.4));
+const finalPos3D = new Vector3(-0.15,-0.45,1.9);
+const finalRot3D = new Quaternion();
+finalRot3D.setFromEuler(new THREE.Euler(0.2,2.8,-0.3));
+const finalPosGame = new Vector3(0,0.45,2.6);
+const finalRotGame = new Quaternion();
+finalRotGame.setFromEuler(new THREE.Euler(0.5,3.3,0.1));
+
+function moveto2D(){
+if(counter < increment){
+    if(counter === 0){
+        startPos = gltfscene.position;
+        startRot.setFromEuler(gltfscene.rotation);
+    }
+    // const posLerp = new THREE.Vector3.lerpVectors(startPos, finalPos2D, counter/increment);
+    gltfscene.position.lerpVectors(startPos, finalPos2D, counter/increment);
+    var targetQ = new Quaternion();
+    targetQ.slerpQuaternions(startRot, finalRot2D, counter/increment);
+    gltfscene.rotation.setFromQuaternion(targetQ);
+    composer.render();
+    window.requestAnimationFrame(moveto2D)
+    counter++;
+}else{
+    counter = 0;
+}
+}
+function moveto3D(){
+    if(counter < increment){
+        if(counter === 0){
+            startPos = gltfscene.position;
+            startRot.setFromEuler(gltfscene.rotation);
+        }
+        gltfscene.position.lerpVectors(startPos, finalPos3D, counter/increment);
+        var targetQ = new Quaternion();
+        targetQ.slerpQuaternions(startRot, finalRot3D, counter/increment);
+        gltfscene.rotation.setFromQuaternion(targetQ);
+        composer.render();
+        window.requestAnimationFrame(moveto3D)
+        counter++;
+    }else{
+        counter = 0;
+    }
+}
+function movetoGame(){
+    if(counter < increment){
+        if(counter === 0){
+            startPos = gltfscene.position;
+            startRot.setFromEuler(gltfscene.rotation);
+        }
+        gltfscene.position.lerpVectors(startPos, finalPosGame, counter/increment);
+        var targetQ = new Quaternion();
+        targetQ.slerpQuaternions(startRot, finalRotGame, counter/increment);
+        gltfscene.rotation.setFromQuaternion(targetQ);
+        composer.render();
+        window.requestAnimationFrame(movetoGame)
+        counter++;
+    }else{
+        counter = 0;
+    }
+}
+

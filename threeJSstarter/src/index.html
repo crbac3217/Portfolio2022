@@ -10,4 +10,18 @@
         <canvas class="webgl"></canvas>
     </div>
 </body>
+<script id="facebackVertexShader" type="x-shader/x-vertex">
+    void main() {
+      gl_Position =   projectionMatrix * modelViewMatrix * vec4(position,1.0) * vec4(1,1,1,1);
+    }
+  </script>
+  
+  <script id="facebackFragmentShader" type="x-shader/x-fragment">
+    uniform sampler2D fbtexture;
+    const vec2  size = vec2(3008, 2000);
+    
+    void main() {
+      gl_FragColor = texture2D(fbtexture,gl_FragCoord.xy/size.xy); 
+    }
+  </script>
 </html>
