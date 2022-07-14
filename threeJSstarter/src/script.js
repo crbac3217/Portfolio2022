@@ -322,17 +322,40 @@ function onPointerDown( event ) {
     //mouse.y = (event.clientY - rect.bottom/2)/(rect.bottom/2);
     //raycaster.setFromCamera( mouse, camera );
     //const intersects = raycaster.intersectObjects( gltfscene.children, false );
-    if(interactable){      
+    if(interactable && front){      
         interactable = false;
-        turn();
+        preTurn();
     }
         
     //}
 
 }
 var turncount = 0;
+function preTurn(){
+    var preTurnAnim = faceanims[2];
+        const val = Math.floor(Math.random() * 4);
+        if(val === 0){
+            preTurnAnim = faceanims[2];
+        }else if (val === 1)
+        {
+            preTurnAnim = faceanims[3];
+        }else if (val === 2)
+        {
+            preTurnAnim = faceanims[4];
+        }else if (val === 3)
+        {
+            preTurnAnim = faceanims[5];
+        }
+        mixer.stopAllAction();
+        const action = mixer.clipAction(preTurnAnim);
+        action.reset();
+        action.setLoop(THREE.LoopOnce);
+        action.play();
+        action.clampWhenFinished = true;
+        console.log(preTurnAnim.name);
+        setTimeout(turn, preTurnAnim.duration * 1000 + 500);
+}
 function turn(){
-    if(front){
         gltfscene.rotateY(-0.1);
         turncount += 0.1;
         composer.render();
@@ -344,16 +367,6 @@ function turn(){
         }else{
             window.requestAnimationFrame(turn)
         }
-    }else if(mode === '2D'){
-        console.log('move to 2D');
-    }
-    else if(mode === '3D'){
-        console.log('move to 3D');
-    }
-    else if(mode === 'Game'){
-        console.log('move to Game');
-
-    }
 }
 
 const animate = () =>
@@ -377,16 +390,25 @@ changePhoneScreen();
 function faceIdleAnims(){
     if(front && interactable){
         var idleAnim = faceanims[1];
-        if(Math.floor(Math.random() * 5) === 3){
+        const val = Math.floor(Math.random() * 10);
+        if(val === 1){
             idleAnim = faceanims[6];
-        }else{
+        }else if (val === 2)
+        {
+            idleAnim = faceanims[7];
+        }else if (val === 3)
+        {
+            idleAnim = faceanims[8];
+        }else
+        {
             idleAnim = faceanims[1];
         }
         const action = mixer.clipAction(idleAnim);
+        action.reset();
         action.setLoop(THREE.LoopOnce);
         action.play();
         console.log(idleAnim.name);
-        setTimeout(faceIdleAnims, idleAnim.duration * 1000 + 1000);
+        setTimeout(faceIdleAnims, idleAnim.duration * 1000 + 2000);
     }
 }
 function changeTabScreen(){
