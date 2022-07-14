@@ -10,18 +10,38 @@
         <canvas class="webgl"></canvas>
     </div>
 </body>
+<!-- facebackmat -->
 <script id="facebackVertexShader" type="x-shader/x-vertex">
     void main() {
-      gl_Position =   projectionMatrix * modelViewMatrix * vec4(position,1.0) * vec4(1,1,1,1);
+      gl_Position =   projectionMatrix * modelViewMatrix * vec4(position,1.0);
     }
-  </script>
+</script>
   
-  <script id="facebackFragmentShader" type="x-shader/x-fragment">
+<script id="facebackFragmentShader" type="x-shader/x-fragment">
     uniform sampler2D fbtexture;
     const vec2  size = vec2(3008, 2000);
     
     void main() {
       gl_FragColor = texture2D(fbtexture,gl_FragCoord.xy/size.xy); 
     }
-  </script>
+</script>
+<!-- shadermat1 -->
+<script id="shadermat1VertexShader" type="x-shader/x-vertex">
+    uniform sampler2D voronoi;
+    const vec2 size = vec2(1,1);
+    varying vec3 normalVal;
+    void main() {
+        gl_Position =   projectionMatrix * modelViewMatrix * vec4(position,1.0);
+        normalVal = normal;
+      }
+</script>
+
+<script id="shadermat1FragmentShader" type="x-shader/x-fragment">
+
+    varying vec3 normalVal;
+    void main() {
+        gl_FragColor = vec4(normalVal * 0.5f + 0.5f, 1);
+      }
+</script>
+<!--  -->
 </html>

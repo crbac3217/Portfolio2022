@@ -167,6 +167,10 @@ loader.load(
             }
             if (child.material && child.material.name === 'testmat') {
                 shaderobj1 = child
+                child.material = new ShaderMaterial({
+                    vertexShader: document.getElementById("shadermat1VertexShader").textContent,
+                    fragmentShader: document.getElementById("shadermat1FragmentShader").textContent
+                })
             }
             
         });
@@ -289,22 +293,24 @@ function onMouseMove(e) {
     {
         if(mode != 'Game'){
             mode = 'Game';
+            counter = 0;
             movetoGame();
         }
     }else{
         if(x < rect.right/2){
             if(mode != '2D'){
                 mode = '2D';
+                counter = 0;
                 moveto2D();
             }
         }else{
             if(mode != '3D'){
                 mode = '3D';
+                counter = 0;
                 moveto3D();
             }
         }
     }
-    console.log(mode);
   }
 }
 const mouse = new THREE.Vector2();
@@ -316,10 +322,8 @@ function onPointerDown( event ) {
     //mouse.y = (event.clientY - rect.bottom/2)/(rect.bottom/2);
     //raycaster.setFromCamera( mouse, camera );
     //const intersects = raycaster.intersectObjects( gltfscene.children, false );
-    if(interactable){
-        front = !front;
+    if(interactable){      
         interactable = false;
-        console.log(front)
         turn();
     }
         
@@ -328,18 +332,18 @@ function onPointerDown( event ) {
 }
 var turncount = 0;
 function turn(){
-    if(!front){
+    if(front){
         gltfscene.rotateY(-0.1);
         turncount += 0.1;
         composer.render();
         if(turncount >= 3){
             turncount = 0;
+            front = !front;
             interactable = true;
             gltfscene.rotation.set(0,3,0);
         }else{
             window.requestAnimationFrame(turn)
         }
-        moveto2D();
     }else if(mode === '2D'){
         console.log('move to 2D');
     }
@@ -412,7 +416,7 @@ const finalRotGame = new Quaternion();
 finalRotGame.setFromEuler(new THREE.Euler(0.5,3.3,0.1));
 
 function moveto2D(){
-if(counter < increment){
+if(counter < increment && mode === '2D'){
     if(counter === 0){
         startPos = gltfscene.position;
         startRot.setFromEuler(gltfscene.rotation);
@@ -425,12 +429,13 @@ if(counter < increment){
     composer.render();
     window.requestAnimationFrame(moveto2D)
     counter++;
+    console.log('2D');
 }else{
-    counter = 0;
+    
 }
 }
 function moveto3D(){
-    if(counter < increment){
+    if(counter < increment && mode === '3D'){
         if(counter === 0){
             startPos = gltfscene.position;
             startRot.setFromEuler(gltfscene.rotation);
@@ -442,12 +447,13 @@ function moveto3D(){
         composer.render();
         window.requestAnimationFrame(moveto3D)
         counter++;
+        console.log('3D');
     }else{
-        counter = 0;
+        
     }
 }
 function movetoGame(){
-    if(counter < increment){
+    if(counter < increment && mode === 'Game'){
         if(counter === 0){
             startPos = gltfscene.position;
             startRot.setFromEuler(gltfscene.rotation);
@@ -459,8 +465,9 @@ function movetoGame(){
         composer.render();
         window.requestAnimationFrame(movetoGame)
         counter++;
+        console.log('Game');
     }else{
-        counter = 0;
+        
     }
 }
 
