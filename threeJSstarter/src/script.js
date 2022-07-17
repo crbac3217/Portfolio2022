@@ -139,7 +139,7 @@ loader.load(
                 phonescreen = child.material;
             }
             if (child.material && child.material.name === 'tabscreen') {
-                child.material.emissiveIntensity = 3;
+                child.material.emissiveIntensity = 0.5;
                 tabscreen = child.material;
             }
             if (child.material && child.material.name === 'htmlin') {
@@ -335,7 +335,7 @@ function preTurn(){
     var preTurnAnim = faceanims[2];
         const val = Math.floor(Math.random() * 4);
         if(val === 0){
-            preTurnAnim = faceanims[2];
+            preTurnAnim = faceanims[6];
         }else if (val === 1)
         {
             preTurnAnim = faceanims[3];
@@ -390,9 +390,9 @@ changePhoneScreen();
 function faceIdleAnims(){
     if(front && interactable){
         var idleAnim = faceanims[1];
-        const val = Math.floor(Math.random() * 10);
+        const val = Math.floor(Math.random() * 15);
         if(val === 1){
-            idleAnim = faceanims[6];
+            idleAnim = faceanims[9];
         }else if (val === 2)
         {
             idleAnim = faceanims[7];
@@ -401,7 +401,7 @@ function faceIdleAnims(){
             idleAnim = faceanims[8];
         }else
         {
-            idleAnim = faceanims[1];
+            idleAnim = faceanims[2];
         }
         const action = mixer.clipAction(idleAnim);
         action.reset();
@@ -427,13 +427,13 @@ var counter = 0;
 var startPos = new Vector3();
 var startRot = new Quaternion();
 
-const finalPos2D = new Vector3(0,-0.45,2.1);
+const finalPos2D = new Vector3(0,-0.45,0.5);
 const finalRot2D = new Quaternion();
 finalRot2D.setFromEuler(new THREE.Euler(0.2,3,0.4));
-const finalPos3D = new Vector3(-0.15,-0.45,1.9);
+const finalPos3D = new Vector3(-0.15,-0.45,0.5);
 const finalRot3D = new Quaternion();
 finalRot3D.setFromEuler(new THREE.Euler(0.2,2.8,-0.3));
-const finalPosGame = new Vector3(0,0.45,2.6);
+const finalPosGame = new Vector3(0,0.45,0.5);
 const finalRotGame = new Quaternion();
 finalRotGame.setFromEuler(new THREE.Euler(0.5,3.3,0.1));
 
