@@ -390,7 +390,7 @@ changePhoneScreen();
 function faceIdleAnims(){
     if(front && interactable){
         var idleAnim = faceanims[1];
-        const val = Math.floor(Math.random() * 15);
+        const val = Math.floor(Math.random() * 10);
         if(val === 1){
             idleAnim = faceanims[9];
         }else if (val === 2)
